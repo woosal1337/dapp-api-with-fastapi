@@ -12,14 +12,14 @@ from eth_account.messages import encode_defunct
 class DbWrapper:
     def __init__(self, db_name: str):
         try:
+            logging_file_name = str(datetime.timestamp(datetime.now())).split('.')[0]
             logging.basicConfig(
-                filename=f"./logs/"
-                f"{str(datetime.timestamp(datetime.now())).split('.')[0]}.log",
-                level=logging.DEBUG,
+                filename=f"./app/logs/{logging_file_name}.log",
                 format="%(asctime)s %(message)s",
                 filemode="w",
             )
             self.logger = logging.getLogger()
+            self.logger.setLevel(logging.DEBUG)
 
             load_dotenv(find_dotenv())
             self.logger.info(".env file was loaded.")
@@ -151,7 +151,8 @@ class DbWrapper:
             "twitter": "random", (optional)
             "discordId": "723465298346523654", (optional)
             "opensea": "random", (optional)
-            "imageUrl": "https://random.com/random.png", (optional)
+            "bio": "I am the best", (optional)
+            "profileImage": "https://random.com/random.png", (optional)
             "points": 0 (optional)
         }
         """
@@ -182,7 +183,8 @@ class DbWrapper:
             "twitter": "random", (optional)
             "discordId": "723465298346523654", (optional)
             "opensea": "random", (optional)
-            "imageUrl": "https://random.com/random.png", (optional)
+            "bio": "I am the best", (optional)
+            "profileImage": "https://random.com/random.png", (optional)
             "points": 0 (optional)
         }
         """
