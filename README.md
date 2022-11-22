@@ -22,10 +22,10 @@
 
 # Contents
 - [1. Introduction](#introduction)
-- [2. Features](#Features)
-- [3. Setup](#Setup)
-- [4. Usage](#Usage)
-- [5. License](#License)
+- [2. Features](#features)
+- [3. Setup](#setup)
+- [4. Usage](#usage)
+- [5. License](#license)
 
 # Introduction
 This project has been done to serve as a blueprint / template for the Web3 DApp API 
@@ -66,6 +66,31 @@ $ cd dapp-api-with-fastapi/
 $ python3 -m venv venv # or conda create -n "dapp-api-with-fastapi" python=3.10
 $ source venv/bin/activate # or conda activate "dapp-api-with-fastapi"
 $ pip install -r requirements.txt
+```
+
+File/Folder Tree Structure
+```
+├── LICENSE
+├── Procfile
+├── README.md
+├── app
+│   ├── __init__.py
+│   ├── db_wrapper.py
+│   ├── decorators
+│   │   ├── __init__.py
+│   │   └── main.py
+│   ├── logs
+│   ├── main.py
+│   └── models
+│       ├── __init__.py
+│       └── main.py
+├── docs
+│   ├── README.md
+│   └── __init__.py
+├── requirements.txt
+└── tests
+    ├── __init__.py
+    └── test_endpoints.py
 ```
 
 # Usage
