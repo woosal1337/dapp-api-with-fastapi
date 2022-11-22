@@ -12,7 +12,7 @@ from eth_account.messages import encode_defunct
 class DbWrapper:
     def __init__(self, db_name: str):
         try:
-            logging_file_name = str(datetime.timestamp(datetime.now())).split('.')[0]
+            logging_file_name = str(datetime.timestamp(datetime.now())).split(".")[0]
             logging.basicConfig(
                 filename=f"./app/logs/{logging_file_name}.log",
                 format="%(asctime)s %(message)s",
@@ -250,42 +250,103 @@ class DbWrapper:
         :param signature: signature of user
         :return: boolean indicating success status
         """
-        try:
+        try:  # Check if the user exists, if not, create a new user and set nonce to
+            # 0 else increase the nonce by 1
             if not self.user_exists(user_public_address):
-                self.logger.critical("User does not exist. Cannot generate signature.")
-                return False
-            else:
-                self.logger.info(f"User Signature: {user_public_address}")
-
-                user = self.get_user_by_public_address(user_public_address)
-
-                sign_message = f"""
-                Authenticating user {user['publicAddress']} with nonce {user['nonce']}
-                """
-                message_hex = encode_defunct(text=sign_message)
-
-                expected_address = self.web3.eth.account.recover_message(
-                    message_hex, signature=signature
-                )
-
-                if expected_address == user_public_address:
-                    self.logger.info(f"Signature is valid: {user_public_address}")
-                    token = jwt.encode(
-                        {
-                            "publicAddress": user_public_address,
-                            "nonce": user["nonce"],
-                            "exp": datetime.datetime.utcnow()
-                            + datetime.timedelta(days=3),
-                        }
+                if self.web3.isAddress(user_public_address):
+                    self.logger.info(
+                        "User does not exist. Creating user with signature."
                     )
 
-                    return {"token": token}
+                    self.logger.info(f"User Signature: {user_public_address}")
+
+                    sign_message = f"""
+                    Authenticating user {user_public_address} with nonce {0}
+                    """
+                    message_hex = encode_defunct(text=sign_message)
+
+                    expected_address = self.web3.eth.account.recover_message(
+                        message_hex, signature=signature
+                    )
+
+                    if expected_address == user_public_address:
+                        self.logger.info(f"Signature is valid: {user_public_address}")
+                        self.logger.info(f"Creating user: {user_public_address}")
+
+                        created_user_id = self.set_user(
+                            {"publicAddress": user_public_address, "nonce": 0}
+                        )
+
+                        self.update_user_nonce(user_public_address, 1)
+                        token = jwt.encode(
+                            {
+                                "publicAddress": user_public_address,
+                                "signature": signature,
+                                "nonce": 0,
+                                "exp": int(
+                                    str(datetime.timestamp(datetime.now())).split(".")[
+                                        0
+                                    ]
+                                )
+                                + (60 * 60 * 24 * 7)  # 7 days
+                                # (seconds * minutes * hours * days)
+                            }
+                        )
+
+                        return {"token": token}
+                    else:
+                        self.logger.error(
+                            f"Signature is invalid: {user_public_address}"
+                        )
+                        return False
                 else:
-                    self.logger.error(f"Signature is invalid: {user_public_address}")
+                    self.logger.error("Invalid public address.")
                     return False
+            else:
+                if self.web3.isAddress(user_public_address):
+                    self.logger.info(f"User Signature: {user_public_address}")
 
-                return True
+                    user = self.get_user_by_public_address(user_public_address)
 
+                    sign_message = f"""
+                    Authenticating user {user['publicAddress']} with nonce {user['nonce']}
+                    """
+                    message_hex = encode_defunct(text=sign_message)
+
+                    expected_address = self.web3.eth.account.recover_message(
+                        message_hex, signature=signature
+                    )
+
+                    if expected_address == user_public_address:
+                        self.logger.info(f"Signature is valid: {user_public_address}")
+
+                        self.update_user_nonce(user_public_address, user["nonce"] + 1)
+                        token = jwt.encode(
+                            {
+                                "publicAddress": user_public_address,
+                                "signature": signature,
+                                "nonce": user["nonce"],
+                                "exp": int(
+                                    str(datetime.timestamp(datetime.now())).split(".")[
+                                        0
+                                    ]
+                                )
+                                + (60 * 60 * 24 * 7)  # 7 days
+                                # (seconds * minutes * hours * days)
+                            }
+                        )
+
+                        return {"token": token}
+                    else:
+                        self.logger.error(
+                            f"Signature is invalid: {user_public_address}"
+                        )
+                        return False
+
+                    return True
+                else:
+                    self.logger.error(f"Invalid public address: {user_public_address}")
+                    return False
         except Exception as e:
             self.logger.error(f"Failed to delete user: {e}")
             return False
@@ -301,12 +362,35 @@ class DbWrapper:
             decoded = jwt.decode(
                 token, key=os.environ.get("JWT_SECRET"), algorithms=["HS256"]
             )
-            return decoded
+
+            if decoded["exp"] > int(
+                str(datetime.timestamp(datetime.now())).split(".")[0]
+            ):
+                jwt_signature = decoded["signature"]
+
+                sign_message = f"""
+                Authenticating user {decoded["publicAddress"]} with nonce 
+                {decoded["nonce"]}
+                """
+                message_hex = encode_defunct(text=sign_message)
+                user_public_address = self.web3.eth.account.recover_message(
+                    message_hex, signature=jwt_signature
+                )
+
+                self.logger.info(
+                    f"Decoded User Signature Public Address:" f" {user_public_address}"
+                )
+                decoded["publicAddress"] = user_public_address
+
+                return decoded
+            else:
+                return False
 
         except Exception as e:
             self.logger.error(f"Failed to verify user token: {e}")
             return False
 
+    # For Admin Dashboard Functions
     def admin_signature(self, user_public_address: str, signature: str):
         """
         :param user_public_address: public address of user
@@ -315,7 +399,7 @@ class DbWrapper:
         """
         try:
             if not self.user_exists(user_public_address):
-                self.logger.critical("User does not exist. Cannot generate signature.")
+                self.logger.critical("Admin does not exist. Cannot generate signature.")
                 return False
             else:
                 self.logger.info(f"Admin Signature: {user_public_address}")
@@ -337,8 +421,12 @@ class DbWrapper:
                         {
                             "publicAddress": user_public_address,
                             "nonce": user["nonce"],
-                            "exp": datetime.datetime.utcnow()
-                            + datetime.timedelta(days=3),
+                            "signature": signature,
+                            "exp": int(
+                                str(datetime.timestamp(datetime.now())).split(".")[0]
+                            )
+                            + (60 * 60 * 24 * 7)  # 7 days
+                            # (seconds * minutes * hours * days)
                         }
                     )
 
@@ -350,7 +438,7 @@ class DbWrapper:
                 return True
 
         except Exception as e:
-            self.logger.error(f"Failed to delete user: {e}")
+            self.logger.error(f"Failed to sign Admin: {e}")
             return False
 
     def admin_verify(self, token: str) -> bool:
@@ -365,11 +453,33 @@ class DbWrapper:
                 token, key=os.environ.get("JWT_SECRET"), algorithms=["HS256"]
             )
 
-            if decoded["publicAddress"] in os.environ.get("ADMINS"):
-                return True
+            if decoded["exp"] > int(
+                str(datetime.timestamp(datetime.now())).split(".")[0]
+            ):
+                if decoded["publicAddress"] in os.environ.get("ADMINS"):
+                    jwt_signature = decoded["signature"]
+
+                    sign_message = f"""
+                    Authenticating user {decoded["publicAddress"]} with nonce 
+                    {decoded["nonce"]}
+                    """
+                    message_hex = encode_defunct(text=sign_message)
+                    user_public_address = self.web3.eth.account.recover_message(
+                        message_hex, signature=jwt_signature
+                    )
+
+                    self.logger.info(
+                        f"Decoded User Signature Public Address:"
+                        f" {user_public_address}"
+                    )
+                    decoded["publicAddress"] = user_public_address
+
+                    return decoded
+                else:
+                    return False
             else:
                 return False
 
         except Exception as e:
-            self.logger.error(f"Failed to verify user token: {e}")
+            self.logger.error(f"Failed to verify Admin token: {e}")
             return False

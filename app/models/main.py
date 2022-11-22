@@ -30,20 +30,20 @@ def as_form(cls: Type[BaseModel]):
 
 @as_form
 class User(BaseModel):
-    publicAddress: Optional[str] = None
-    name: Optional[str] = None
-    email: Optional[str] = None
-    instagram: Optional[str] = None
-    twitter: Optional[str] = None
-    discordId: Optional[str] = None
-    opensea: Optional[str] = None
-    profileImage: Optional[str] = None
-    bio: Optional[str] = None
-    points: Optional[int] = None
-    token: Optional[str] = None
+    publicAddress: Optional[str] = ""
+    name: Optional[str] = ""
+    email: Optional[str] = ""
+    instagram: Optional[str] = ""
+    twitter: Optional[str] = ""
+    discordId: Optional[str] = ""
+    opensea: Optional[str] = ""
+    profileImage: Optional[str] = ""
+    bio: Optional[str] = ""
+    points: Optional[int] = 0
+    token: Optional[str] = ""
 
 
 @as_form
 class Admin(BaseModel):
-    publicAddress: Optional[str] = None
-    token: Optional[str] = None
+    publicAddress: Optional[str] = ""
+    token: Optional[str] = ""
