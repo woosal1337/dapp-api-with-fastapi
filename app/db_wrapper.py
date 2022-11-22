@@ -99,7 +99,7 @@ class DbWrapper:
         """
         try:
             self.logger.info("Getting all users")
-            return self.get_collection("users").find()
+            return [i for i in self.get_collection("users").find()]
 
         except Exception as e:
             self.logger.error(f"Failed to get users: {e}")
@@ -490,7 +490,7 @@ class DbWrapper:
         """
         try:
             self.logger.info(f"Getting all emails")
-            return self.get_collection("emails").find()
+            return [i for i in self.get_collection("emails").find()]
         except Exception as e:
             self.logger.error(f"Failed to get emails: {e}")
             return False
@@ -502,7 +502,8 @@ class DbWrapper:
         """
         try:
             self.logger.info(f"Setting email: {email}")
-            return self.get_collection("emails").insert_one({"email": email})
+            return self.get_collection("emails").insert_one({"email":
+                                                                 email}).inserted_id
         except Exception as e:
             self.logger.error(f"Failed to set email: {e}")
             return False

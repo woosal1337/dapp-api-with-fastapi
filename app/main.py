@@ -18,7 +18,7 @@ app = FastAPI()
 db = DbWrapper(db_name="test_db")
 
 # Add CORS middleware to allow cross-origin requests
-origins = ["http://localhost:3000", "http://localhost:8000"]
+origins = ["http://127.0.0.1:3000", "http://127.0.0.1:8000"]
 
 app.add_middleware(
     CORSMiddleware,
@@ -63,7 +63,7 @@ async def user_exists(
 
 
 # Access: Admin
-@app.get("/get_users")
+@app.post("/get_users")
 async def get_users(admin: Admin = Depends(Admin.as_form)):
     """
     :param admin: Admin object
@@ -221,7 +221,7 @@ async def admin_verify(
 ############  E-Mail Set/Get  ##################
 ################################################
 # Access: Admin
-@app.get("/get_emails")
+@app.post("/get_emails")
 async def get_emails(admin: Admin = Depends(Admin.as_form)):
     """
     :param admin: Admin object
