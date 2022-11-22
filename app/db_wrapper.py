@@ -159,7 +159,11 @@ class DbWrapper:
         try:
             if not self.user_exists(user_info["publicAddress"]):
                 self.logger.info(f"Setting user: {user_info['publicAddress']}")
-                return self.get_collection("users").insert_one(user_info).inserted_id
+                return {
+                    "success": self.get_collection("users")
+                    .insert_one("user_info")
+                    .inserted_id
+                }
             else:
                 self.logger.critical("User already exists.")
                 return None
@@ -502,8 +506,9 @@ class DbWrapper:
         """
         try:
             self.logger.info(f"Setting email: {email}")
-            return self.get_collection("emails").insert_one({"email":
-                                                                 email}).inserted_id
+            return (
+                self.get_collection("emails").insert_one({"email": email}).inserted_id
+            )
         except Exception as e:
             self.logger.error(f"Failed to set email: {e}")
             return False
