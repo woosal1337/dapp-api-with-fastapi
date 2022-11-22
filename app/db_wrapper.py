@@ -483,3 +483,26 @@ class DbWrapper:
         except Exception as e:
             self.logger.error(f"Failed to verify Admin token: {e}")
             return False
+
+    def get_emails(self):
+        """
+        :return: list of emails
+        """
+        try:
+            self.logger.info(f"Getting all emails")
+            return self.get_collection("emails").find()
+        except Exception as e:
+            self.logger.error(f"Failed to get emails: {e}")
+            return False
+
+    def set_email(self, email: str):
+        """
+        :param email: email of user
+        :return: boolean indicating success status
+        """
+        try:
+            self.logger.info(f"Setting email: {email}")
+            return self.get_collection("emails").insert_one({"email": email})
+        except Exception as e:
+            self.logger.error(f"Failed to set email: {e}")
+            return False
